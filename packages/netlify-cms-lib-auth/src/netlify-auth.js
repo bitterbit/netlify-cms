@@ -41,19 +41,7 @@ class Authenticator {
 
   handshakeCallback(options, cb) {
     const fn = e => {
-      console.log("handshakeCallback", e.data);
-      console.log("origin", e.origin, "base_url", this.base_url);
-      let parts = e.data.split(":");
-
-      console.log("test 1", parts[0] === 'authorizing');
-      console.log("test 2", parts[1] === options.provider);
-      console.log("test 3 a", e.origin.startsWith(this.base_url));
-      console.log("test 3 b", e.origin.startsWith("file://"));
-
-      if (parts[0] === 'authorizing' && 
-      parts[1] === options.provider && 
-      (e.origin.startsWith(this.base_url) || e.origin.startsWith("file://"))) {
-        console.log("We are in... :)");
+      if (e.data === 'authorizing:' + options.provider && e.origin === this.base_url) {
         window.removeEventListener('message', fn, false);
         window.addEventListener('message', this.authorizeCallback(options, cb), false);
         return this.authWindow.postMessage(e.data, e.origin);
@@ -64,18 +52,7 @@ class Authenticator {
 
   authorizeCallback(options, cb) {
     const fn = e => {
-
-      console.log("authorizeCallback", e.data);
-      console.log("origin", e.origin, "base_url", this.base_url);
-      
-      let parts = e.data.split(":");
-
-      console.log("test 1", parts[0] === 'authorizing');
-      console.log("test 2", parts[1] === options.provider);
-      console.log("test 3 a", e.origin.startsWith(this.base_url));
-      console.log("test 3 b", e.origin.startsWith("file://"));
-
-      if (!e.origin.startsWith("file://") && e.origin !== this.base_url) {
+      if (e.origin !== this.base_url) {
         return;
       }
 
@@ -130,7 +107,7 @@ class Authenticator {
     const conf = PROVIDERS[provider] || PROVIDERS.github;
     const left = screen.width / 2 - conf.width / 2;
     const top = screen.height / 2 - conf.height / 2;
-    window.addEventListener('message', this.authorizeCallback(options, cb), false);
+    window.addEventListener('message', this.handshakeCallback(options, cb), false);
     let url = `${this.base_url}/${this.auth_endpoint}?provider=${options.provider}&site_id=${siteID}`;
     if (options.scope) {
       url += '&scope=' + options.scope;
